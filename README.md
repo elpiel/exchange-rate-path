@@ -1,8 +1,5 @@
 # The Exchange Rate Path Problem
 
-
-## In a weekend
-
 ### Dependencies
 
 * [Cargo make](https://sagiegurari.github.io/cargo-make/):
