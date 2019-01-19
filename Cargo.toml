@@ -1,5 +1,5 @@
 [package]
-name = "exchange-rate-path"
+name = "exchange_rate_path"
 version = "0.1.0"
 authors = ["Lachezar Lechev <elpiel93@gmail.com>"]
 edition = "2018"
