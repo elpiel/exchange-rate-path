@@ -1,4 +1,3 @@
-use crate::parse::parsing::ArgumentType;
 use crate::parse::parsing::{ParseCommandError, ParseErrorKind};
 use chrono::{DateTime, Utc};
 
@@ -13,42 +12,32 @@ pub struct PriceUpdate {
 }
 
 impl PriceUpdate {
-    // TODO: Should we use these or not?
-    const POSITIONED_ARGUMENTS: [ArgumentType; 6] = [
-        ArgumentType::Timestamp,
-        ArgumentType::Exchange,
-        ArgumentType::SourceCurrency,
-        ArgumentType::DestinationCurrency,
-        ArgumentType::ForwardFactor,
-        ArgumentType::BackwardFactor,
-    ];
-
-    pub fn from_input<'a>(input_slice: &[&str]) -> Result<Self, ParseCommandError> {
-        if input_slice.len() != PriceUpdate::POSITIONED_ARGUMENTS.len() {
+    pub fn from_input(input_slice: &[&str]) -> Result<Self, ParseCommandError> {
+        if input_slice.len() != 6 {
             return Err(ParseCommandError(ParseErrorKind::RequiredArgumentsCount));
         }
 
-        let timestamp = input_slice
-            .get(0)
-            .unwrap()
-            .parse::<DateTime<Utc>>()
-            .map_err(|_| ParseCommandError(ParseErrorKind::TimestampParsing))?;
+        let parse_timestamp = |input: &str| -> Result<DateTime<Utc>, ParseCommandError> {
+            input
+                .parse::<DateTime<Utc>>()
+                .map_err(|_| ParseCommandError(ParseErrorKind::TimestampParsing))
+        };
 
-        let exchange: String = input_slice.get(1).unwrap().to_string();
-        let source_currency: String = input_slice.get(2).unwrap().to_string();
-        let destination_currency: String = input_slice.get(3).unwrap().to_string();
-        let forward_factor: f64 = input_slice
-            .get(4)
-            .unwrap()
-            .parse()
-            .map_err(|_| ParseCommandError(ParseErrorKind::FloatParsing))?;
-        let backward_factor: f64 = input_slice
-            .get(5)
-            .unwrap()
-            .parse()
-            .map_err(|_| ParseCommandError(ParseErrorKind::FloatParsing))?;
+        let parse_float = |input: &str| -> Result<f64, ParseCommandError> {
+            input
+                .parse()
+                .map_err(|_| ParseCommandError(ParseErrorKind::FloatParsing))
+        };
 
-        Ok(PriceUpdate {
+        let timestamp = parse_timestamp(input_slice[0])?;
+
+        let exchange: String = input_slice[1].to_string();
+        let source_currency: String = input_slice[2].to_string();
+        let destination_currency: String = input_slice[3].to_string();
+        let forward_factor: f64 = parse_float(input_slice[4])?;
+        let backward_factor: f64 = parse_float(input_slice[5])?;
+
+        Ok(Self {
             timestamp,
             exchange,
             source_currency,
@@ -61,78 +50,131 @@ impl PriceUpdate {
 
 #[derive(Debug, PartialEq)]
 pub struct ExchangeRequest {
-    source_exchange: String,
-    source_currency: String,
-    destination_exchange: String,
-    destination_currency: String,
+    pub source_exchange: String,
+    pub source_currency: String,
+    pub destination_exchange: String,
+    pub destination_currency: String,
+}
+
+impl ExchangeRequest {
+    pub const COMMAND_PREFIX: &'static str = "EXCHANGE_RATE_REQUEST";
+
+    pub fn from_input(input_slice: &[&str]) -> Result<Self, ParseCommandError> {
+        if input_slice.len() != 4 {
+            return Err(ParseCommandError(ParseErrorKind::RequiredArgumentsCount));
+        }
+
+        let source_exchange: String = input_slice[0].to_string();
+        let source_currency: String = input_slice[1].to_string();
+
+        let destination_exchange: String = input_slice[2].to_string();
+        let destination_currency: String = input_slice[3].to_string();
+
+        Ok(Self {
+            source_exchange,
+            source_currency,
+            destination_exchange,
+            destination_currency,
+        })
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
 
-    #[test]
-    fn price_update_error_handling() {
-        let timestamp_str = "2017-11-01T09:42:23+00:00";
-        let timestamp = timestamp_str.parse::<DateTime<Utc>>().unwrap();
+    mod price_update {
+        use super::*;
 
-        assert_eq!(
-            Ok(PriceUpdate {
-                timestamp,
-                exchange: "KRAKEN".to_owned(),
-                source_currency: "BTC".to_owned(),
-                destination_currency: "USD".to_owned(),
-                forward_factor: 1000.0,
-                backward_factor: 0.0009,
-            }),
-            PriceUpdate::from_input(&vec![
-                timestamp_str,
-                "KRAKEN",
-                "BTC",
-                "USD",
-                "1000.0",
-                "0.0009"
-            ])
-        );
-        let error_arguments_count = Err(ParseCommandError(ParseErrorKind::RequiredArgumentsCount));
+        #[test]
+        fn price_update_valid_input() {
+            let timestamp_str = "2017-11-01T09:42:23+00:00";
+            let timestamp = timestamp_str.parse::<DateTime<Utc>>().unwrap();
 
-        assert_eq!(error_arguments_count, PriceUpdate::from_input(&[]));
-        assert_eq!(
-            error_arguments_count,
-            PriceUpdate::from_input(&["1", "2", "3", "4", "5"])
-        );
-        assert_eq!(
-            error_arguments_count,
-            PriceUpdate::from_input(&["1", "2", "3", "4", "5", "6", "7"])
-        );
+            assert_eq!(
+                Ok(PriceUpdate {
+                    timestamp,
+                    exchange: "KRAKEN".to_owned(),
+                    source_currency: "BTC".to_owned(),
+                    destination_currency: "USD".to_owned(),
+                    forward_factor: 1000.0,
+                    backward_factor: 0.0009,
+                }),
+                PriceUpdate::from_input(&vec![
+                    timestamp_str,
+                    "KRAKEN",
+                    "BTC",
+                    "USD",
+                    "1000.0",
+                    "0.0009"
+                ])
+            );
+        }
 
-        assert_eq!(
-            Err(ParseCommandError(ParseErrorKind::TimestampParsing)),
-            PriceUpdate::from_input(&["1", "Exchange", "ETH", "EUR", "5.0", "6.0"])
-        );
+        #[test]
+        fn price_update_wrong_arguments_count() {
+            let error_arguments_count =
+                Err(ParseCommandError(ParseErrorKind::RequiredArgumentsCount));
 
-        let float_error = Err(ParseCommandError(ParseErrorKind::FloatParsing));
-        assert_eq!(
-            float_error,
-            PriceUpdate::from_input(&[
+            assert_eq!(error_arguments_count, PriceUpdate::from_input(&[]));
+            assert_eq!(
+                error_arguments_count,
+                PriceUpdate::from_input(&["1", "2", "3", "4", "5"])
+            );
+            assert_eq!(
+                error_arguments_count,
+                PriceUpdate::from_input(&["1", "2", "3", "4", "5", "6", "7"])
+            );
+        }
+
+        #[test]
+        fn price_update_wrong_timestamp() {
+            assert_eq!(
+                Err(ParseCommandError(ParseErrorKind::TimestampParsing)),
+                PriceUpdate::from_input(&["1", "Exchange", "ETH", "EUR", "5.0", "6.0"])
+            );
+        }
+
+        #[test]
+        fn price_update_wrong_floats() {
+            let float_error = Err(ParseCommandError(ParseErrorKind::FloatParsing));
+            let forward_factor_wrong = [
                 "2017-11-01T09:42:23+00:00",
                 "Exchange",
                 "ETH",
                 "EUR",
                 "not a float",
-                "6.0"
-            ])
-        );
-        assert_eq!(
-            float_error,
-            PriceUpdate::from_input(&[
+                "6.0",
+            ];
+            assert_eq!(float_error, PriceUpdate::from_input(&forward_factor_wrong));
+
+            let backward_factor_wrong = [
                 "2017-11-01T09:42:23+00:00",
                 "Exchange",
                 "ETH",
                 "EUR",
                 "5.0",
-                "not a float"
-            ])
-        );
+                "not a float",
+            ];
+
+            assert_eq!(float_error, PriceUpdate::from_input(&backward_factor_wrong));
+        }
+    }
+
+    mod exchange_request {
+        use super::*;
+
+        #[test]
+        fn price_update_valid_input() {
+            assert_eq!(
+                Ok(ExchangeRequest {
+                    source_exchange: "LACHO".to_owned(),
+                    source_currency: "BTC".to_owned(),
+                    destination_exchange: "KRAKEN".to_owned(),
+                    destination_currency: "USD".to_owned(),
+                }),
+                ExchangeRequest::from_input(&vec!["LACHO", "BTC", "KRAKEN", "USD",])
+            );
+        }
     }
 }
