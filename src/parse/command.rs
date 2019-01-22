@@ -60,15 +60,15 @@ impl ExchangeRequest {
     pub const COMMAND_PREFIX: &'static str = "EXCHANGE_RATE_REQUEST";
 
     pub fn from_input(input_slice: &[&str]) -> Result<Self, ParseCommandError> {
-        if input_slice.len() != 4 {
+        if input_slice.len() != 5 {
             return Err(ParseCommandError(ParseErrorKind::RequiredArgumentsCount));
         }
 
-        let source_exchange: String = input_slice[0].to_string();
-        let source_currency: String = input_slice[1].to_string();
+        let source_exchange: String = input_slice[1].to_string();
+        let source_currency: String = input_slice[2].to_string();
 
-        let destination_exchange: String = input_slice[2].to_string();
-        let destination_currency: String = input_slice[3].to_string();
+        let destination_exchange: String = input_slice[3].to_string();
+        let destination_currency: String = input_slice[4].to_string();
 
         Ok(Self {
             source_exchange,
@@ -165,7 +165,7 @@ mod test {
         use super::*;
 
         #[test]
-        fn price_update_valid_input() {
+        fn exchange_request_valid_input() {
             assert_eq!(
                 Ok(ExchangeRequest {
                     source_exchange: "LACHO".to_owned(),
@@ -173,7 +173,7 @@ mod test {
                     destination_exchange: "KRAKEN".to_owned(),
                     destination_currency: "USD".to_owned(),
                 }),
-                ExchangeRequest::from_input(&vec!["LACHO", "BTC", "KRAKEN", "USD",])
+                ExchangeRequest::from_input(&vec![ExchangeRequest::COMMAND_PREFIX, "LACHO", "BTC", "KRAKEN", "USD",])
             );
         }
     }
