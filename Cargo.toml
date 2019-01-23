@@ -6,4 +6,7 @@ edition = "2018"
 
 [dependencies]
 chrono = "0.4.6"
-petgraph = "0.4.13"
+
+[dependencies.petgraph]
+version = "0.4.13"
+features = ["graphmap"]
