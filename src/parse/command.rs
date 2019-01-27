@@ -1,7 +1,9 @@
 use crate::parse::parsing::{ParseCommandError, ParseErrorKind};
 use chrono::{DateTime, Utc};
+use std::hash::Hash;
+use std::hash::Hasher;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct PriceUpdate {
     pub timestamp: DateTime<Utc>,
     pub exchange: String,
@@ -11,7 +13,42 @@ pub struct PriceUpdate {
     pub backward_factor: f64,
 }
 
+impl Hash for PriceUpdate {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.timestamp.hash(state);
+        self.exchange.hash(state);
+        self.source_currency.hash(state);
+        self.destination_currency.hash(state);
+    }
+}
+
+impl PartialEq for PriceUpdate {
+    fn eq(&self, other: &Self) -> bool {
+        self.timestamp.eq(&other.timestamp)
+        && self.exchange.eq(&other.exchange)
+        && self.source_currency.eq(&other.source_currency)
+        && self.destination_currency.eq(&other.destination_currency)
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self.eq(other)
+    }
+}
+
+impl Eq for PriceUpdate{}
+
 impl PriceUpdate {
+    pub fn new(timestamp: DateTime<Utc>, exchange: &str, source_currency: &str, destination_currency: &str, forward_factor: f64, backward_factor: f64) -> Self {
+        Self {
+            timestamp,
+            exchange: exchange.to_owned(),
+            source_currency: source_currency.to_owned(),
+            destination_currency: destination_currency.to_owned(),
+            forward_factor,
+            backward_factor,
+        }
+    }
+
     pub fn from_input(input_slice: &[&str]) -> Result<Self, ParseCommandError> {
         if input_slice.len() != 6 {
             return Err(ParseCommandError(ParseErrorKind::RequiredArgumentsCount));
@@ -85,6 +122,40 @@ mod test {
 
     mod price_update {
         use super::*;
+
+        #[test]
+        fn price_update_equality() {
+            let timestamp = Utc::now();
+            let comparison_update = PriceUpdate::new(timestamp.clone(), "EX1", "C1", "C2", 1.0, 2.0);
+            // it should be affected by the forward and backward factors
+            let equal_update = PriceUpdate::new(timestamp, "EX1", "C1", "C2", 5.0, 6.0);
+
+            assert_eq!(equal_update, comparison_update);
+
+            // different time
+            assert_ne!(
+                PriceUpdate::new(Utc::now(), "EX1", "C1", "C2", 5.0, 6.0),
+                comparison_update
+            );
+
+            // different exchange
+            assert_ne!(
+                PriceUpdate::new(Utc::now(), "DIFF", "C1", "C2", 5.0, 6.0),
+                comparison_update
+            );
+
+            // different source currency
+            assert_ne!(
+                PriceUpdate::new(Utc::now(), "EX1", "SOURCE", "C2", 5.0, 6.0),
+                comparison_update
+            );
+
+            // different destination currency
+            assert_ne!(
+                PriceUpdate::new(Utc::now(), "EX1", "C1", "DEST", 5.0, 6.0),
+                comparison_update
+            );
+        }
 
         #[test]
         fn price_update_valid_input() {
@@ -173,7 +244,7 @@ mod test {
                     destination_exchange: "KRAKEN".to_owned(),
                     destination_currency: "USD".to_owned(),
                 }),
-                ExchangeRequest::from_input(&vec![ExchangeRequest::COMMAND_PREFIX, "LACHO", "BTC", "KRAKEN", "USD",])
+                ExchangeRequest::from_input(&vec![ExchangeRequest::COMMAND_PREFIX, "LACHO", "BTC", "KRAKEN", "USD", ])
             );
         }
     }
