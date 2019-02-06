@@ -39,6 +39,18 @@ impl GraphHandler {
     }
 }
 
+// TODO: Test this
+impl From<Vec<PriceUpdate>> for GraphHandler {
+    fn from(price_updates: Vec<PriceUpdate>) -> Self {
+        let mut graph_handler = GraphHandler::default();
+        for price_update in price_updates {
+            graph_handler.handle_update(price_update);
+        }
+
+        graph_handler
+    }
+}
+
 #[cfg(test)]
 mod test {
     use chrono::prelude::*;
