@@ -1,10 +1,9 @@
 use crate::graph::handler::GraphHandler;
-use std::collections::HashMap;
 use petgraph::graphmap::AllEdges;
 use petgraph::Directed;
+use std::collections::HashMap;
 
-fn best(graph_handler: &GraphHandler) {
-}
+fn best(graph_handler: &GraphHandler) {}
 
 fn initialize_rates(edges: AllEdges<usize, f64, Directed>) -> HashMap<usize, HashMap<usize, f64>> {
     edges.fold(HashMap::new(), |mut acc, (from_node, to_node, _weight)| {
@@ -16,7 +15,9 @@ fn initialize_rates(edges: AllEdges<usize, f64, Directed>) -> HashMap<usize, Has
     })
 }
 
-fn initialize_next(edges: AllEdges<usize, f64, Directed>) -> HashMap<usize, HashMap<usize, Option<usize>>> {
+fn initialize_next(
+    edges: AllEdges<usize, f64, Directed>,
+) -> HashMap<usize, HashMap<usize, Option<usize>>> {
     edges.fold(HashMap::new(), |mut acc, (from_node, to_node, _weight)| {
         let mut dest_hash_map = HashMap::new();
         dest_hash_map.insert(to_node, None);
@@ -44,17 +45,16 @@ fn best_rates(graph_handler: &GraphHandler) -> HashMap<usize, HashMap<usize, Opt
     for k in 0..v.len() {
         for i in 0..v.len() {
             for j in 0..v.len() {
-                let mul_rate = rate.get(&i).unwrap().get(&k).unwrap() * rate.get(&k).unwrap().get(&j).unwrap();
+                let mul_rate =
+                    rate.get(&i).unwrap().get(&k).unwrap() * rate.get(&k).unwrap().get(&j).unwrap();
 
                 if *rate.get(&i).unwrap().get(&j).unwrap() < mul_rate {
-
                     rate.get_mut(&i).unwrap().insert(j, mul_rate);
                     let next_i = next.get_mut(&i).unwrap();
                     let next_record = next_i.get(&k).unwrap();
 
                     next_i.insert(j, *next_record);
                 }
-
             }
         }
     }
@@ -64,7 +64,5 @@ fn best_rates(graph_handler: &GraphHandler) -> HashMap<usize, HashMap<usize, Opt
 #[cfg(test)]
 mod test {
     #[test]
-    fn it_inserts_rate() {
-
-    }
+    fn it_inserts_rate() {}
 }
