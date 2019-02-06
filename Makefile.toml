@@ -16,9 +16,9 @@ args = ["clippy", "--all-targets", "--all-features"]
 
 [tasks.check-quick]
 dependencies = [
-    "check-format",
-    "check-clippy",
-    "test",
+	"check-format",
+#	"check-clippy",
+	"test",
 ]
 
 [tasks.test]
@@ -28,9 +28,9 @@ args = ["test"]
 [tasks.check-all]
 dependencies = [
 	"clean",
-    "check-format",
-    "check-clippy",
-    "test",
+	"check-format",
+#	"check-clippy",
+	"test",
 ]
 
 [tasks.clean]
@@ -44,7 +44,7 @@ args = ["build"]
 [tasks.clean-build]
 dependencies = [
 	"clean",
-    "build",
-    "test"
+	"build",
+	"test"
 ]
 

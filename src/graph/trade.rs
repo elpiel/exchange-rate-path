@@ -253,14 +253,14 @@ mod test {
         let best_rates = Exchanger::best_rates(&graph_handler);
 
         //        dbg!(best_rates);
-//        let path = Exchanger::path(0, 3, &best_rates);
-//        assert_eq!(Some(vec![0_usize, 1_usize, 2_usize, 3_usize]), path);
+        //        let path = Exchanger::path(0, 3, &best_rates);
+        //        assert_eq!(Some(vec![0_usize, 1_usize, 2_usize, 3_usize]), path);
 
         //        let path = Exchanger::path(0, 5, &best_rates);
         //        assert_eq!(Some(vec![0_usize, 4_usize, 5_usize]), path);
     }
 
-//    #[test]
+    //    #[test]
     fn test_multiple_paths_from_different_exchanges() {
         let price_updates = vec![
             PriceUpdate::from_input(&[

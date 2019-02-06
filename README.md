@@ -1,4 +1,4 @@
-# The Exchange Rate Path Problem
+# The Exchange Rate Path Problem [![CircleCI](https://circleci.com/gh/elpiel/exchange-rate-path.svg?style=svg&circle-token=d6a2352d26b3e705d077bdc9b7a14bc12bcae5cb)](https://circleci.com/gh/elpiel/exchange-rate-path) [![codecov](https://codecov.io/gh/elpiel/exchange-rate-path/branch/master/graph/badge.svg?token=zyWdhLwwJM)](https://codecov.io/gh/elpiel/exchange-rate-path)
 
 ### Dependencies
 
@@ -59,3 +59,20 @@ To check the code, please run:
 * Clean the previous artifacts (runs `cargo clean` underneath)
 
     * `cargo make clean`
+    
+    
+## Docker image
+
+#### Build docker image:
+
+`docker build . -t elpiel/circle-ci-rust`
+
+#### Push docker image:
+
+You can push images to [docker hub](http://hub.docker.com/):
+
+`docker push elpiel/circle-ci-rust:{TAG}`
+
+The Main example being the latest tag:
+
+`docker push elpiel/circle-ci-rust:latest`
