@@ -1,0 +1,55 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      # The image used to build our project, build
+      # your own using the Dockerfile provided below
+      # and replace here. I put my own image here for
+      # the example.
+      - image: circleci/rust:latest
+
+    environment:
+      # Set your codecov token if your repository is private.
+      CODECOV_TOKEN: "9de45b89-eaa1-4f7e-9992-6778d1f37979"
+      TZ: "/usr/share/zoneinfo/Europe/Amsterdam"
+
+    steps:
+      - checkout
+      - restore_cache:
+          key: project-cache
+      - run:
+          name: Set Rust Stable as default
+          command: |
+            rustup default stable
+      - run:
+          name: Install cargo make
+          command: |
+           rustup run stable cargo install cargo-make
+      - run:
+          name: Check formatting and run clippy
+          command: |
+            rustup run stable cargo make check-all
+      - run:
+          name: Nightly Build
+          command: |
+            rustup run nightly rustc --version --verbose
+            rustup run nightly cargo --version --verbose
+            rustup run nightly cargo build
+      - run:
+          name: Stable Build
+          command: |
+            rustup run stable rustc --version --verbose
+            rustup run stable cargo --version --verbose
+            rustup run stable cargo build
+      - run:
+          name: Test
+          command: rustup run stable cargo make test
+      - run:
+          name: Upload Coverage
+          command: ./scripts/codecov.sh
+      - save_cache:
+          key: project-cache
+          paths:
+            - "~/.cargo"
+            - "./target"
