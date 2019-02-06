@@ -31,7 +31,8 @@ RUN rustup component add clippy
 # Install Cargo Make
 RUN cargo install cargo-make
 
-#ENV RUSTFLAGS "-C link-dead-code"
+# TODO: Move to CircleCI configuration
+ENV RUSTFLAGS "-C link-dead-code"
 #ENV CFG_RELEASE_CHANNEL "stable"
 
 #RUN bash -l -c 'echo $(rustc --print sysroot)/lib >> /etc/ld.so.conf'

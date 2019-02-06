@@ -67,7 +67,6 @@ To check the code, please run:
 
 `docker build . -t elpiel/circle-ci-rust`
 
-
 #### Push docker image:
 
 You can push images to [docker hub](http://hub.docker.com/):

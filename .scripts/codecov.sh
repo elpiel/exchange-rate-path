@@ -1,4 +1,5 @@
 #!/bin/bash
+# CODECOV_TOKEN is coming from CircleCi environment variables
 
 REPORT=$(find target/debug -maxdepth 1 -name 'exchange_rate_path-*' -a ! -name '*.d')
 
