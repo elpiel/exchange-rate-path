@@ -1,4 +1,4 @@
-# The Exchange Rate Path Problem
+# The Exchange Rate Path Problem [![CircleCI](https://circleci.com/gh/elpiel/exchange-rate-path.svg?style=svg&circle-token=d6a2352d26b3e705d077bdc9b7a14bc12bcae5cb)](https://circleci.com/gh/elpiel/exchange-rate-path) [![codecov](https://codecov.io/gh/elpiel/exchange-rate-path/branch/master/graph/badge.svg?token=zyWdhLwwJM)](https://codecov.io/gh/elpiel/exchange-rate-path)
 
 ### Dependencies
 
