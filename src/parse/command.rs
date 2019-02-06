@@ -26,10 +26,10 @@ impl Hash for PriceUpdate {
 impl PartialEq for PriceUpdate {
     fn eq(&self, other: &Self) -> bool {
         self.exchange.eq(&other.exchange)
-            && (
-            (self.source_currency.eq(&other.source_currency) && self.destination_currency.eq(&other.destination_currency))
-                || (self.source_currency.eq(&other.destination_currency) && self.destination_currency.eq(&other.source_currency))
-        )
+            && ((self.source_currency.eq(&other.source_currency)
+                && self.destination_currency.eq(&other.destination_currency))
+                || (self.source_currency.eq(&other.destination_currency)
+                    && self.destination_currency.eq(&other.source_currency)))
     }
 }
 

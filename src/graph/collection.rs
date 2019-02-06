@@ -25,16 +25,16 @@ impl Index {
 
 #[derive(Debug)]
 pub struct IndexHashMap<K>
-    where
-        K: Eq + Hash,
+where
+    K: Eq + Hash,
 {
     hash_map: HashMap<K, usize>,
     indices: Vec<K>,
 }
 
 impl<K> IndexHashMap<K>
-    where
-        K: Eq + Hash + Clone,
+where
+    K: Eq + Hash + Clone,
 {
     pub fn new() -> Self {
         Self {
@@ -100,23 +100,29 @@ impl Default for ExchangeCompleteGraph {
 
 impl ExchangeCompleteGraph {
     pub fn add(&mut self, price_update: &PriceUpdate) -> (Index, Index) {
-        let source_node = (price_update.exchange.clone(), price_update.source_currency.clone());
-        let dest_node = (price_update.exchange.clone(), price_update.destination_currency.clone());
+        let source_node = (
+            price_update.exchange.clone(),
+            price_update.source_currency.clone(),
+        );
+        let dest_node = (
+            price_update.exchange.clone(),
+            price_update.destination_currency.clone(),
+        );
 
         let source_index = self.index_map.entry(source_node);
         let dest_index = self.index_map.entry(dest_node);
 
         match (&source_index, &dest_index) {
             (&Index::Fetched(source_index), &Index::Fetched(dest_index)) => {
-                self.graph.add_edge(source_index, dest_index, price_update.forward_factor);
-                self.graph.add_edge(dest_index, source_index, price_update.backward_factor);
+                self.graph
+                    .add_edge(source_index, dest_index, price_update.forward_factor);
+                self.graph
+                    .add_edge(dest_index, source_index, price_update.backward_factor);
             }
             (&Index::Fetched(source_index), &Index::Inserted(dest_index)) => {
-                println!("Here 2");
                 self.insert_for_exchange(&price_update, dest_index, Some(source_index), false);
             }
             (&Index::Inserted(source_index), &Index::Fetched(dest_index)) => {
-                println!("Here 3");
                 self.insert_for_exchange(price_update, source_index, Some(dest_index), true);
             }
             (&Index::Inserted(source_index), &Index::Inserted(dest_index)) => {
@@ -131,12 +137,26 @@ impl ExchangeCompleteGraph {
     }
 
     /// Inserts a given exchange in the graph
-    /// if `is_forward` is `true` is passed, then the factors should be applied from  node -> origin forward and origin-> node
-    fn insert_for_exchange(&mut self, price_update: &PriceUpdate, node: usize, origin: Option<usize>, is_forward: bool) {
-        let currency = if is_forward { &price_update.source_currency } else { &price_update.destination_currency };
+    /// if `is_forward` is `true`, then the factors should be applied from node -> origin forward and origin-> node
+    fn insert_for_exchange(
+        &mut self,
+        price_update: &PriceUpdate,
+        node: usize,
+        origin: Option<usize>,
+        is_forward: bool,
+    ) {
+        let currency = if is_forward {
+            &price_update.source_currency
+        } else {
+            &price_update.destination_currency
+        };
 
-        let same_exchange = self.index_map.iter()
-            .filter(|((_, exchange_currency), &node_index)| currency == exchange_currency && node_index != node);
+        let same_exchange =
+            self.index_map
+                .iter()
+                .filter(|((_, exchange_currency), &node_index)| {
+                    currency == exchange_currency && node_index != node
+                });
 
         for (_, &exchange_node) in same_exchange {
             self.graph.add_edge(node, exchange_node, 1.0);
@@ -145,8 +165,16 @@ impl ExchangeCompleteGraph {
 
         match origin {
             Some(origin_index) => {
-                let forward_factor = if is_forward { price_update.forward_factor } else { price_update.backward_factor };
-                let backward_factor = if is_forward { price_update.backward_factor } else { price_update.forward_factor };
+                let forward_factor = if is_forward {
+                    price_update.forward_factor
+                } else {
+                    price_update.backward_factor
+                };
+                let backward_factor = if is_forward {
+                    price_update.backward_factor
+                } else {
+                    price_update.forward_factor
+                };
 
                 // Node -> origin is forward if `is_forward` is `true`
                 self.graph.add_edge(node, origin_index, forward_factor);
@@ -185,18 +213,17 @@ mod test {
 
             exchange_graph.add(&price_update);
 
-            let updated_factors = PriceUpdate::new(
-                Utc::now(),
-                "KRAKEN",
-                "BTC",
-                "USD",
-                5000.0,
-                3.0,
-            );
+            let updated_factors = PriceUpdate::new(Utc::now(), "KRAKEN", "BTC", "USD", 5000.0, 3.0);
 
             exchange_graph.add(&updated_factors);
-            let source_key = (updated_factors.exchange.clone(), updated_factors.source_currency);
-            let dest_key = (updated_factors.exchange.clone(), updated_factors.destination_currency);
+            let source_key = (
+                updated_factors.exchange.clone(),
+                updated_factors.source_currency,
+            );
+            let dest_key = (
+                updated_factors.exchange.clone(),
+                updated_factors.destination_currency,
+            );
 
             assert_eq!(2, exchange_graph.index_map.len());
 
@@ -208,74 +235,86 @@ mod test {
             assert_eq!(Some(&1_usize), dest_node);
 
             // check values for factor
-            assert_eq!(Some(&5000.0), exchange_graph.graph.edge_weight(*source_node.unwrap(), *dest_node.unwrap()));
-            assert_eq!(Some(&3.0), exchange_graph.graph.edge_weight(*dest_node.unwrap(), *source_node.unwrap()));
+            assert_eq!(
+                Some(&5000.0),
+                exchange_graph
+                    .graph
+                    .edge_weight(*source_node.unwrap(), *dest_node.unwrap())
+            );
+            assert_eq!(
+                Some(&3.0),
+                exchange_graph
+                    .graph
+                    .edge_weight(*dest_node.unwrap(), *source_node.unwrap())
+            );
         }
 
         #[test]
-        fn second_price_update_inserts_node_for_different_exchange_and_links_same_currencies_with_default_weight() {
+        fn second_price_update_inserts_node_for_different_exchange_and_links_same_currencies_with_default_weight(
+        ) {
             let mut exchange_graph = ExchangeCompleteGraph::default();
 
-            let first_update = PriceUpdate::new(
-                Utc::now(),
-                "KRAKEN",
-                "BTC",
-                "USD",
-                1000.0,
-                0.0009,
-            );
+            let first_update = PriceUpdate::new(Utc::now(), "KRAKEN", "BTC", "USD", 1000.0, 0.0009);
 
             let (node_0, node_1) = exchange_graph.add(&first_update);
 
-            let second_update = PriceUpdate::new(
-                Utc::now(),
-                "EXCI",
-                "BTC",
-                "EUR",
-                5000.0,
-                2.0,
-            );
+            let second_update = PriceUpdate::new(Utc::now(), "EXCI", "BTC", "EUR", 5000.0, 2.0);
 
             let (node_2, node_3) = exchange_graph.add(&second_update);
-
 
             assert_eq!(4, exchange_graph.index_map.len());
 
             assert_eq!(6, exchange_graph.graph.all_edges().count());
             // first price update edges
-            assert_eq!(Some(&1000.0), exchange_graph.graph.edge_weight(*node_0.get_value(), *node_1.get_value()));
-            assert_eq!(Some(&0.0009), exchange_graph.graph.edge_weight(*node_1.get_value(), *node_0.get_value()));
+            assert_eq!(
+                Some(&1000.0),
+                exchange_graph
+                    .graph
+                    .edge_weight(*node_0.get_value(), *node_1.get_value())
+            );
+            assert_eq!(
+                Some(&0.0009),
+                exchange_graph
+                    .graph
+                    .edge_weight(*node_1.get_value(), *node_0.get_value())
+            );
             // second price update edges
-            assert_eq!(Some(&5000.0), exchange_graph.graph.edge_weight(*node_2.get_value(), *node_3.get_value()));
-            assert_eq!(Some(&2.0), exchange_graph.graph.edge_weight(*node_3.get_value(), *node_2.get_value()));
+            assert_eq!(
+                Some(&5000.0),
+                exchange_graph
+                    .graph
+                    .edge_weight(*node_2.get_value(), *node_3.get_value())
+            );
+            assert_eq!(
+                Some(&2.0),
+                exchange_graph
+                    .graph
+                    .edge_weight(*node_3.get_value(), *node_2.get_value())
+            );
             // and the BTC of both exchange should be connected to each other with weight: 1.0
-            assert_eq!(Some(&1.0), exchange_graph.graph.edge_weight(*node_0.get_value(), *node_2.get_value()));
-            assert_eq!(Some(&1.0), exchange_graph.graph.edge_weight(*node_2.get_value(), *node_0.get_value()));
+            assert_eq!(
+                Some(&1.0),
+                exchange_graph
+                    .graph
+                    .edge_weight(*node_0.get_value(), *node_2.get_value())
+            );
+            assert_eq!(
+                Some(&1.0),
+                exchange_graph
+                    .graph
+                    .edge_weight(*node_2.get_value(), *node_0.get_value())
+            );
         }
 
         #[test]
         fn second_price_update_fetches_first_node_and_inserts_the_second_node() {
             let mut exchange_graph = ExchangeCompleteGraph::default();
 
-            let first_update = PriceUpdate::new(
-                Utc::now(),
-                "KRAKEN",
-                "BTC",
-                "USD",
-                1000.0,
-                0.0009,
-            );
+            let first_update = PriceUpdate::new(Utc::now(), "KRAKEN", "BTC", "USD", 1000.0, 0.0009);
 
             let (node_0, node_1) = exchange_graph.add(&first_update);
 
-            let second_update = PriceUpdate::new(
-                Utc::now(),
-                "KRAKEN",
-                "BTC",
-                "EUR",
-                5000.0,
-                2.0,
-            );
+            let second_update = PriceUpdate::new(Utc::now(), "KRAKEN", "BTC", "EUR", 5000.0, 2.0);
 
             let (node_2, node_3) = exchange_graph.add(&second_update);
 
@@ -288,36 +327,42 @@ mod test {
 
             assert_eq!(4, exchange_graph.graph.all_edges().count());
             // first price update edges
-            assert_eq!(Some(&1000.0), exchange_graph.graph.edge_weight(*node_0.get_value(), *node_1.get_value()));
-            assert_eq!(Some(&0.0009), exchange_graph.graph.edge_weight(*node_1.get_value(), *node_0.get_value()));
+            assert_eq!(
+                Some(&1000.0),
+                exchange_graph
+                    .graph
+                    .edge_weight(*node_0.get_value(), *node_1.get_value())
+            );
+            assert_eq!(
+                Some(&0.0009),
+                exchange_graph
+                    .graph
+                    .edge_weight(*node_1.get_value(), *node_0.get_value())
+            );
             // second price update edges
-            assert_eq!(Some(&5000.0), exchange_graph.graph.edge_weight(*node_2.get_value(), *node_3.get_value()));
-            assert_eq!(Some(&2.0), exchange_graph.graph.edge_weight(*node_3.get_value(), *node_2.get_value()));
+            assert_eq!(
+                Some(&5000.0),
+                exchange_graph
+                    .graph
+                    .edge_weight(*node_2.get_value(), *node_3.get_value())
+            );
+            assert_eq!(
+                Some(&2.0),
+                exchange_graph
+                    .graph
+                    .edge_weight(*node_3.get_value(), *node_2.get_value())
+            );
         }
 
         #[test]
         fn second_price_update_updates_first_node_and_fetches_the_second_node() {
             let mut exchange_graph = ExchangeCompleteGraph::default();
 
-            let first_update = PriceUpdate::new(
-                Utc::now(),
-                "KRAKEN",
-                "BTC",
-                "USD",
-                1000.0,
-                0.0009,
-            );
+            let first_update = PriceUpdate::new(Utc::now(), "KRAKEN", "BTC", "USD", 1000.0, 0.0009);
 
             let (node_0, node_1) = exchange_graph.add(&first_update);
 
-            let second_update = PriceUpdate::new(
-                Utc::now(),
-                "KRAKEN",
-                "USD",
-                "ETH",
-                5000.0,
-                2.0,
-            );
+            let second_update = PriceUpdate::new(Utc::now(), "KRAKEN", "USD", "ETH", 5000.0, 2.0);
 
             let (node_2, node_3) = exchange_graph.add(&second_update);
 
@@ -330,11 +375,31 @@ mod test {
 
             assert_eq!(4, exchange_graph.graph.all_edges().count());
             // first price update edges
-            assert_eq!(Some(&1000.0), exchange_graph.graph.edge_weight(*node_0.get_value(), *node_1.get_value()));
-            assert_eq!(Some(&0.0009), exchange_graph.graph.edge_weight(*node_1.get_value(), *node_0.get_value()));
+            assert_eq!(
+                Some(&1000.0),
+                exchange_graph
+                    .graph
+                    .edge_weight(*node_0.get_value(), *node_1.get_value())
+            );
+            assert_eq!(
+                Some(&0.0009),
+                exchange_graph
+                    .graph
+                    .edge_weight(*node_1.get_value(), *node_0.get_value())
+            );
             // second price update edges
-            assert_eq!(Some(&5000.0), exchange_graph.graph.edge_weight(*node_2.get_value(), *node_3.get_value()));
-            assert_eq!(Some(&2.0), exchange_graph.graph.edge_weight(*node_3.get_value(), *node_2.get_value()));
+            assert_eq!(
+                Some(&5000.0),
+                exchange_graph
+                    .graph
+                    .edge_weight(*node_2.get_value(), *node_3.get_value())
+            );
+            assert_eq!(
+                Some(&2.0),
+                exchange_graph
+                    .graph
+                    .edge_weight(*node_3.get_value(), *node_2.get_value())
+            );
         }
     }
 
