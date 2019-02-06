@@ -19,8 +19,11 @@ RUN wget https://github.com/SimonKagstrom/kcov/archive/v$KCOV_VERSION.tar.gz && 
 # Stable as default
 RUN rustup default stable
 
-# Add rustfmt
+# Add Rustfmt
 RUN rustup component add rustfmt
+
+# Add Clippy
+RUN rustup component add clippy
 
 # Install Cargo Make
 RUN cargo install cargo-make

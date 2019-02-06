@@ -59,3 +59,21 @@ To check the code, please run:
 * Clean the previous artifacts (runs `cargo clean` underneath)
 
     * `cargo make clean`
+    
+    
+## Docker image
+
+#### Build docker image:
+
+`docker build . -t elpiel/circle-ci-rust`
+
+
+#### Push docker image:
+
+You can push images to [docker hub](http://hub.docker.com/):
+
+`docker push elpiel/circle-ci-rust:{TAG}`
+
+The Main example being the latest tag:
+
+`docker push elpiel/circle-ci-rust:latest`
