@@ -7,7 +7,7 @@ jobs:
       # your own using the Dockerfile provided below
       # and replace here. I put my own image here for
       # the example.
-      - image: circleci/rust:latest
+      - image: elpiel/circle-ci-rust:latest
 
     environment:
       # Set your codecov token if your repository is private.
@@ -22,10 +22,6 @@ jobs:
           name: Set Rust Stable as default
           command: |
             rustup default stable
-      - run:
-          name: Install cargo make
-          command: |
-           rustup run stable cargo install cargo-make
       - run:
           name: Check formatting and run clippy
           command: |
