@@ -16,6 +16,9 @@ RUN wget https://github.com/SimonKagstrom/kcov/archive/v$KCOV_VERSION.tar.gz && 
     cmake .. && make && make install && \
     cd ../.. && rm -rf kcov-$KCOV_VERSION
 
+# Install nightly as well
+RUN rustup install nightly
+
 # Stable as default
 RUN rustup default stable
 
