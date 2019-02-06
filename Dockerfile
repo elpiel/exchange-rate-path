@@ -18,6 +18,7 @@ RUN wget https://github.com/SimonKagstrom/kcov/archive/v$KCOV_VERSION.tar.gz && 
 
 # Install Cargo Make
 RUN cargo install cargo-make
+RUN rustup component add rustfmt
 
 #ENV RUSTFLAGS "-C link-dead-code"
 #ENV CFG_RELEASE_CHANNEL "stable"
