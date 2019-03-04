@@ -3,3 +3,4 @@ pub use self::parse::parsing::{parse_line, ParseCommandError, ParseErrorKind, Pa
 
 pub mod graph;
 pub mod parse;
+pub mod display;
